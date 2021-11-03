@@ -1,12 +1,9 @@
-package org.saulis;
+package org.saulis.async;
 
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
-import jetbrains.buildServer.buildTriggers.BuildTriggerDescriptor;
-import jetbrains.buildServer.serverSide.CustomDataStorage;
-import org.hamcrest.core.IsNot;
 import org.hamcrest.core.StringContains;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,7 +24,7 @@ public class GerritClientTests {
 
     private GerritClient client;
     private JSch jsch;
-    private GerritPolledTriggerContext context;
+    private GerritTriggerContext context;
     private Session session;
     private ChannelExec channel;
     private int sshPort = 29418;
@@ -39,10 +36,10 @@ public class GerritClientTests {
     @Before
     public void setup() throws JSchException, IOException {
         mockDepedencies();
+        context = mock(GerritTriggerContext.class);
+        client = new GerritClient(jsch, context);
 
-        client = new GerritClient(jsch);
 
-        context = mock(GerritPolledTriggerContext.class);
         session = mock(Session.class);
         channel = mock(ChannelExec.class);
 
@@ -75,7 +72,7 @@ public class GerritClientTests {
     }
 
     private List<GerritPatchSet> getNewPatchSets() {
-        return client.getNewPatchSets(context);
+        return client.getNewPatchSets();
     }
 
     @Test

@@ -1,4 +1,4 @@
-package org.saulis;
+package org.saulis.async;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonStreamParser;
@@ -6,75 +6,88 @@ import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
-import jetbrains.buildServer.buildTriggers.PolledTriggerContext;
 import jetbrains.buildServer.log.Loggers;
-import org.apache.log4j.Logger;
+import com.intellij.openapi.diagnostic.Logger;
+import jetbrains.buildServer.ssh.TeamCitySshKey;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.InterruptedIOException;
 import java.util.*;
 
-public class GerritClient {
-
-    private static final Logger LOG = Logger.getLogger(Loggers.VCS_CATEGORY + GerritClient.class);
+public class GerritClient implements Runnable {
+    private static final Logger LOG = Logger.getInstance(Loggers.VCS_CATEGORY + GerritClient.class);
     private final JSch jsch;
+    private final GerritTriggerContext context;
+    private List<GerritPatchSet> newPatchSets = null;
 
-    public GerritClient(JSch jsch) {
+    public GerritClient(JSch jsch, GerritTriggerContext context) {
         this.jsch = jsch;
+        this.context = context;
     }
 
-    public List<GerritPatchSet> getNewPatchSets(GerritPolledTriggerContext context) {
+    public List<GerritPatchSet> getNewPatchSets() {
+        return newPatchSets;
+    }
+
+    public void run() {
         ChannelExec channel = null;
         Session session = null;
 
         try {
-            session = openSession(context);
+            LOG.debug("Gerrit Client START connection: " + context.context.getBuildType().getExternalId());
+            session = openSession(context, context.getConnectTimeoutMs());
             channel = openChannel(context, session);
 
-            return readGerritPatchSets(context, channel);
-        }
-        catch (Exception e) {
-            LOG.error("Gerrit trigger failed while getting patch sets.", e);
-        }
-        finally {
-            if (channel != null)
+            newPatchSets = readGerritPatchSets(context, channel);
+            LOG.debug("Gerrit Client DONE " + context.context.getBuildType().getExternalId());
+        } catch(InterruptedException | InterruptedIOException ex) {
+            LOG.error("Gerrit trigger was stopped while running", ex);
+        } catch (Exception ex) {
+            LOG.error("Gerrit trigger failed while getting patch sets.", ex);
+        } finally {
+            if (channel != null) {
                 channel.disconnect();
-            if (session != null)
+            }
+            if (session != null) {
                 session.disconnect();
+            }
         }
-
-        return new ArrayList<GerritPatchSet>();
     }
 
-    private Session openSession(GerritPolledTriggerContext context) throws JSchException {
+    private Session openSession(GerritTriggerContext context, int connectTimeoutMs) throws Exception {
+        TeamCitySshKey sshKey = context.getSshKey();
 
-        if(context.hasPassphrase()) {
-            jsch.addIdentity(context.getPrivateKey(), context.getPassphrase());
+        if(sshKey == null) {
+            throw new Exception("No SSH key found");
         } else {
-            jsch.addIdentity(context.getPrivateKey());
+            jsch.addIdentity(context.getUsername(), context.getSshKey().getPrivateKey(), null, null);
+
+            Session session = jsch.getSession(context.getUsername(), context.getHost(), Integer.parseInt(context.getPort()));
+            session.setConfig("StrictHostKeyChecking", "no");
+            session.connect(connectTimeoutMs);
+
+            return session;
         }
-
-        Session session = jsch.getSession(context.getUsername(), context.getHost(), 29418);
-        session.setConfig("StrictHostKeyChecking", "no");
-        session.connect();
-
-        return session;
     }
 
-    private ChannelExec openChannel(GerritPolledTriggerContext context, Session session) throws JSchException {
+    private ChannelExec openChannel(GerritTriggerContext context, Session session) throws JSchException {
         ChannelExec channel;
         channel = (ChannelExec)session.openChannel("exec");
 
         String command = createCommand(context);
         LOG.debug("GERRIT: " + command);
+        channel.setPty(false);
         channel.setCommand(command);
 
+        //Do not use the timeout here
+        //It appears that function has a bug where the input stream may not complete
         channel.connect();
 
         return channel;
     }
 
-    private String createCommand(GerritPolledTriggerContext context) {
+    private String createCommand(GerritTriggerContext context) {
         StringBuilder command = new StringBuilder();
         command.append("gerrit query --format=JSON status:open");
 
@@ -86,17 +99,20 @@ public class GerritClient {
             command.append(" branch:" + context.getBranchParameter());
         }
 
+        // Ignore drafts from Gerrit
+        command.append(" NOT is:draft");
+
         // Optimizing the query.
         // Assuming that no more than <limit> new patch sets are created during a single poll interval.
         // Adjust if needed.
-        command.append(" limit:10");
+        command.append(" limit:" + context.getQueryLimit());
         command.append(" --current-patch-set ");
 
         return command.toString();
     }
 
 
-    private List<GerritPatchSet> readGerritPatchSets(GerritPolledTriggerContext context, ChannelExec channel) throws IOException {
+    private List<GerritPatchSet> readGerritPatchSets(GerritTriggerContext context, ChannelExec channel) throws IOException {
         JsonStreamParser parser = new JsonStreamParser(new InputStreamReader(channel.getInputStream()));
 
         List<GerritPatchSet> patchSets = new ArrayList<GerritPatchSet>();
@@ -134,7 +150,11 @@ public class GerritClient {
         String ref = currentPatchSet.get("ref").getAsString();
         long createdOn = currentPatchSet.get("createdOn").getAsLong() * 1000L;
 
-        return new GerritPatchSet(project, branch, ref, createdOn);
+        JsonObject owner = row.get("owner").getAsJsonObject();
+
+        String userName = owner.get("username").getAsString();
+
+        return new GerritPatchSet(project, branch, ref, createdOn, userName);
     }
 
     private boolean isStatsRow(JsonObject ticket) {

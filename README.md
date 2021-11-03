@@ -1,3 +1,5 @@
+SOURCE: https://github.com/Saulis/teamcity-gerrit-trigger
+
 teamcity-gerrit-trigger
 =======================
 
@@ -10,6 +12,7 @@ Plugin for Teamcity which polls Gerrit to trigger builds
 
 #### Building
 
+- Run getApacheMaven.bat for a one time setup of Apache Maven.
 - Run mvn package to create a zip file which you can drop under the plugins folder in your Teamcity server.
 
 #### Usage

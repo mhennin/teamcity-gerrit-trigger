@@ -1,9 +1,10 @@
-package org.saulis;
+package org.saulis.async;
 
-
+import jetbrains.buildServer.buildTriggers.async.*;
 import jetbrains.buildServer.buildTriggers.BuildTriggerDescriptor;
 import jetbrains.buildServer.buildTriggers.BuildTriggeringPolicy;
 import jetbrains.buildServer.serverSide.BuildCustomizerFactory;
+import jetbrains.buildServer.users.UserModel;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,18 +19,19 @@ import static org.mockito.Mockito.when;
 public class GerritTriggerServiceTests {
 
     private GerritTriggerService service;
+    private GerritSettings gerritSettings;
     private BuildTriggerDescriptor buildTriggerDescriptor;
     private HashMap<String,String> parameters = new HashMap<String, String>();
-
 
     @Before
     public void setup() {
         BuildCustomizerFactory buildCustomizerFactory = mock(BuildCustomizerFactory.class);
+        AsyncPolledBuildTriggerFactory triggerFactory = mock(AsyncPolledBuildTriggerFactory.class);
         PluginDescriptor pluginDescriptor = mock(PluginDescriptor.class);
+        gerritSettings = mock(GerritSettings.class);
         buildTriggerDescriptor = mockBuildTriggerDescriptor();
 
-
-        service = new GerritTriggerService(buildCustomizerFactory, pluginDescriptor);
+        service = new GerritTriggerService(buildCustomizerFactory, triggerFactory, pluginDescriptor, mock(UserModel.class), gerritSettings);
     }
 
     private BuildTriggerDescriptor mockBuildTriggerDescriptor() {

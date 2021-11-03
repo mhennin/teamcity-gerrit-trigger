@@ -2,5 +2,6 @@
 <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
 
 <beans default-autowire="constructor">
-    <bean class="org.saulis.GerritTriggerService" />
+    <bean class="org.saulis.async.GerritSettings" />
+    <bean class="org.saulis.async.GerritTriggerService" />
 </beans>

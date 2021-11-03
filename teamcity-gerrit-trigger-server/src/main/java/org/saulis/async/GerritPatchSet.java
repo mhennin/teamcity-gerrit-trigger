@@ -1,4 +1,4 @@
-package org.saulis;
+package org.saulis.async;
 
 import java.util.Date;
 
@@ -7,13 +7,14 @@ class GerritPatchSet {
     private final String branch;
     private final String ref;
     private final Date createdOn;
+    private final String userName;
 
-    public GerritPatchSet(String project, String branch, String ref, long createdOn) {
-
+    public GerritPatchSet(String project, String branch, String ref, long createdOn, String userName) {
         this.project = project;
         this.branch = branch;
         this.ref = ref;
         this.createdOn = new Date(createdOn);
+        this.userName = userName;
     }
 
     public String getProject() {
@@ -31,4 +32,11 @@ class GerritPatchSet {
     public Date getCreatedOn() {
         return createdOn;
     }
+
+    // Convert refs/changes/A/BBBB/C to A/BBBB/C
+    public String getRefBranchName() {
+        return ref.replace("refs/changes/", "");
+    }
+
+    public String getUserName() { return userName; }
 }

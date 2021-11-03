@@ -1,4 +1,4 @@
-package org.saulis;
+package org.saulis.async;
 
 import jetbrains.buildServer.buildTriggers.BuildTriggerDescriptor;
 import jetbrains.buildServer.buildTriggers.PolledTriggerContext;
@@ -15,9 +15,10 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class GerritPolledTriggerContextTests {
+public class GerritTriggerContextTests {
 
-    private GerritPolledTriggerContext sut;
+    private GerritTriggerContext sut;
+    private GerritSettings settings;
     private PolledTriggerContext context;
     private HashMap<String, String> parameters;
     private CustomDataStorage customDataStorage;
@@ -25,8 +26,9 @@ public class GerritPolledTriggerContextTests {
 
     @Before
     public void setup() {
+        settings = mock(GerritSettings.class);
         context = mock(PolledTriggerContext.class);
-        sut = new GerritPolledTriggerContext(context);
+        sut = new GerritTriggerContext(settings, context);
 
         BuildTriggerDescriptor triggerDescriptor = mock(BuildTriggerDescriptor.class);
         when(context.getTriggerDescriptor()).thenReturn(triggerDescriptor);
@@ -53,62 +55,6 @@ public class GerritPolledTriggerContextTests {
         parameters.put(Parameters.HOST, "host    ");
 
         assertThat(sut.getHost(), is("host"));
-    }
-
-    @Test
-    public void trimmedPassphraseIsFetched() {
-        parameters.put(Parameters.PASSPHRASE, "foo  ");
-
-        assertThat(sut.getPassphrase(), is("foo"));
-    }
-
-    @Test
-    public void hasPassphrase() {
-        parameters.put(Parameters.PASSPHRASE, "foo");
-
-        assertTrue(sut.hasPassphrase());
-    }
-
-    @Test
-    public void missingPassphraseIsHandled() {
-        parameters.put(Parameters.PASSPHRASE, null);
-
-        assertFalse(sut.hasPassphrase());
-    }
-
-    @Test
-    public void emptyPassphraseIsHandled() {
-        parameters.put(Parameters.PASSPHRASE, "  ");
-
-        assertFalse(sut.hasPassphrase());
-    }
-
-    @Test
-    public void trimmedPrivateKeyIsFetched() {
-        parameters.put(Parameters.KEYPATH, "foo  ");
-
-        assertThat(sut.getCustomPrivateKey(), is("foo"));
-    }
-
-    @Test
-    public void hasPrivateKey() {
-        parameters.put(Parameters.KEYPATH, "foo");
-
-        assertTrue(sut.hasCustomPrivateKey());
-    }
-
-    @Test
-    public void missingPrivateKeyIsHandled() {
-        parameters.put(Parameters.KEYPATH, null);
-
-        assertFalse(sut.hasCustomPrivateKey());
-    }
-
-    @Test
-    public void emptyPrivateKeyIsHandled() {
-        parameters.put(Parameters.KEYPATH, "  ");
-
-        assertFalse(sut.hasCustomPrivateKey());
     }
 
     @Test

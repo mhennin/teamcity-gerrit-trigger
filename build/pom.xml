@@ -3,22 +3,22 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>teamcity-gerrit-trigger</artifactId>
+        <artifactId>teamcity-gerrit-async-trigger</artifactId>
         <groupId>org.saulis</groupId>
-        <version>1.0</version>
+        <version>1.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>build</artifactId>
     <packaging>pom</packaging>
     <properties>
-        <maven.build.timestamp.format>yyyyddMMHHmmss</maven.build.timestamp.format>
+        <maven.build.timestamp.format>yyyyMMddHHmmss</maven.build.timestamp.format>
     </properties>
     <dependencies>
         <dependency>
             <groupId>org.saulis</groupId>
-            <artifactId>teamcity-gerrit-trigger-server</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <artifactId>teamcity-gerrit-async-trigger-server</artifactId>
+            <version>1.1</version>
         </dependency>
     </dependencies>
     <build>
@@ -41,7 +41,7 @@
                     <replacements>
                         <replacement>
                             <token>@Version@</token>
-                            <value>snapshot-${maven.build.timestamp}</value>
+                            <value>${project.parent.version}</value>
                         </replacement>
                     </replacements>
                 </configuration>
@@ -57,7 +57,7 @@
                             <goal>single</goal>
                         </goals>
                         <configuration>
-                            <finalName>teamcity-gerrit-trigger</finalName>
+                            <finalName>teamcity-gerrit-async-trigger</finalName>
                             <outputDirectory>${project.parent.build.directory}</outputDirectory>
                             <appendAssemblyId>false</appendAssemblyId>
                             <descriptors>

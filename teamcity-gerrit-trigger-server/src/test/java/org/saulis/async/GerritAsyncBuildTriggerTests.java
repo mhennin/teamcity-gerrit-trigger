@@ -1,4 +1,4 @@
-package org.saulis;
+package org.saulis.async;
 
 import jetbrains.buildServer.buildTriggers.PolledTriggerContext;
 import jetbrains.buildServer.serverSide.BuildCustomizer;
@@ -6,6 +6,7 @@ import jetbrains.buildServer.serverSide.BuildCustomizerFactory;
 import jetbrains.buildServer.serverSide.BuildPromotion;
 import jetbrains.buildServer.serverSide.SBuildType;
 import jetbrains.buildServer.users.SUser;
+import jetbrains.buildServer.users.UserModel;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -14,9 +15,10 @@ import java.util.Date;
 
 import static org.mockito.Mockito.*;
 
-public class GerritPolledBuildTriggerTests {
+public class GerritAsyncBuildTriggerTests {
 
-    private GerritPolledBuildTrigger sut;
+    private GerritAsyncBuildTrigger sut;
+    private GerritSettings gerritSettings;
     private PolledTriggerContext context;
     private BuildCustomizerFactory buildCustomerFactory;
     private GerritClient client;
@@ -28,12 +30,13 @@ public class GerritPolledBuildTriggerTests {
     public void setup() {
         client = mock(GerritClient.class);
         buildCustomerFactory = mock(BuildCustomizerFactory.class);
+        gerritSettings = mock(GerritSettings.class);
 
-        sut = new GerritPolledBuildTrigger(client, buildCustomerFactory);
+        sut = new GerritAsyncBuildTrigger(gerritSettings, buildCustomerFactory, mock(UserModel.class));
 
         context = mock(PolledTriggerContext.class);
         patchSets = new ArrayList<GerritPatchSet>();
-        when(client.getNewPatchSets(any(GerritPolledTriggerContext.class))).thenReturn(patchSets);
+        when(client.getNewPatchSets()).thenReturn(patchSets);
 
         buildCustomizer = mock(BuildCustomizer.class);
         when(buildCustomerFactory.createBuildCustomizer(any(SBuildType.class), any(SUser.class))).thenReturn(buildCustomizer);
@@ -43,7 +46,7 @@ public class GerritPolledBuildTriggerTests {
     }
 
     private void triggerBuild() {
-        sut.triggerBuild(context);
+        sut.triggerBuild("someValue", context);
     }
 
     @Test
@@ -57,7 +60,7 @@ public class GerritPolledBuildTriggerTests {
 
     @Test
     public void refIsSetAsBranch() {
-        patchSets.add(new GerritPatchSet("project", "branch", "refs/changes/1", new Date().getTime()));
+        patchSets.add(new GerritPatchSet("project", "branch", "refs/changes/1", new Date().getTime(), "user"));
 
         triggerBuild();
 
@@ -66,7 +69,7 @@ public class GerritPolledBuildTriggerTests {
 
     @Test
     public void newBuildIsAddedToQueue() {
-        patchSets.add(new GerritPatchSet("project", "branch", "refs/changes/1", new Date().getTime()));
+        patchSets.add(new GerritPatchSet("project", "branch", "refs/changes/1", new Date().getTime(), "user"));
 
         triggerBuild();
 
