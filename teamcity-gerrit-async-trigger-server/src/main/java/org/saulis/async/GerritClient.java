@@ -102,6 +102,9 @@ public class GerritClient implements Runnable {
         // Ignore drafts from Gerrit
         command.append(" NOT is:draft");
 
+        // Ignore wip from Gerrit
+        command.append(" NOT is:wip");
+
         // Optimizing the query.
         // Assuming that no more than <limit> new patch sets are created during a single poll interval.
         // Adjust if needed.

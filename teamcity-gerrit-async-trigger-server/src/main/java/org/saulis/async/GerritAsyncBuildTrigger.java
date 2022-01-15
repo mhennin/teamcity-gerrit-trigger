@@ -94,7 +94,7 @@ class GerritAsyncBuildTrigger extends BaseAsyncPolledBuildTrigger {
                 SUser user = getUser(p);
                 BuildCustomizer buildCustomizer = buildCustomizerFactory.createBuildCustomizer(buildType, user);
                 buildCustomizer.setDesiredBranchName(branchName);
-                buildCustomizer.setParameters(GetCustomParameters(branchName));
+                buildCustomizer.setPersonal(true);
 
                 buildCustomizer.createPromotion().addToQueue(TRIGGERED_BY_NAME);
             }
@@ -120,20 +120,9 @@ class GerritAsyncBuildTrigger extends BaseAsyncPolledBuildTrigger {
     }
 
     // Returns the number of seconds between when the trigger should be called.
-    // Tortugas was running the trigger every 20 seconds by default.
     @Override
     public int getPollInterval(@NotNull PolledTriggerContext context) {
         GerritTriggerContext gerritTriggerContext = gerritSettings.createContext(context);
         return gerritTriggerContext.getPolledTriggerIntervalSeconds();
-    }
-
-    // Sets GerritBranch parameter on the triggered build and all reverse dependencies.
-    private Map<String,String> GetCustomParameters(String branchName) {
-        Map<String,String> customParameters = new HashMap<String,String>();
-        customParameters.put(String.format("reverse.dep.*.%s", TEAMCITY_BRANCH_NAME_PARAMETER), branchName);
-        customParameters.put(String.format("reverse.dep.*.%s", BRANCH_NAME_PARAMETER), branchName);
-        customParameters.put(BRANCH_NAME_PARAMETER, branchName);
-
-        return customParameters;
     }
 }
