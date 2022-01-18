@@ -97,3 +97,10 @@
         <props:textProperty name="${keys.branch}" style="width:18em;"/>
     </td>
 </tr>
+
+<tr class="noBorder" >
+    <td><label for="${keys.queueAsPersonalBuild}">Queue as Personal Build: </label></td>
+    <td>
+        <props:checkboxProperty name="${keys.queueAsPersonalBuild}"/>
+    </td>
+</tr>

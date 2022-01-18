@@ -70,7 +70,7 @@ class GerritAsyncBuildTrigger extends BaseAsyncPolledBuildTrigger {
                 t.interrupt();
                 t.join();
             } else {
-                queuePatchSets(gerritClient.getNewPatchSets(), buildType, buildConfigId);
+                queuePatchSets(gerritClient.getNewPatchSets(), buildType, buildConfigId, gerritTriggerContext);
             }
         } catch (Exception e) {
             LOG.error("GERRIT:", e);
@@ -85,7 +85,7 @@ class GerritAsyncBuildTrigger extends BaseAsyncPolledBuildTrigger {
         return null;
     }
 
-    private void queuePatchSets(List<GerritPatchSet> patchSets, SBuildType buildType, String buildConfigId) {
+    private void queuePatchSets(List<GerritPatchSet> patchSets, SBuildType buildType, String buildConfigId, GerritTriggerContext context) {
         if(patchSets != null) {
             LOG.debug(String.format("GERRIT: Going to trigger %s new build(s): %s", patchSets.size(), buildConfigId));
 
@@ -94,7 +94,10 @@ class GerritAsyncBuildTrigger extends BaseAsyncPolledBuildTrigger {
                 SUser user = getUser(p);
                 BuildCustomizer buildCustomizer = buildCustomizerFactory.createBuildCustomizer(buildType, user);
                 buildCustomizer.setDesiredBranchName(branchName);
-                buildCustomizer.setPersonal(true);
+
+                if(context.getQueueAsPersonalBuild()) {
+                    buildCustomizer.setPersonal(true);
+                }
 
                 buildCustomizer.createPromotion().addToQueue(TRIGGERED_BY_NAME);
             }

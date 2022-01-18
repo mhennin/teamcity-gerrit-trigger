@@ -13,6 +13,7 @@ public class Parameters {
     public static final String PROJECT = "gerritProject";
     public static final String USERNAME = "gerritUsername";
     public static final String BRANCH = "gerritBranch";
+    public static final String QUEUE_AS_PERSONAL_BUILD = "queueAsPersonalBuild";
 
     public static final String TIMESTAMP_KEY = "timestamp";
 
@@ -49,6 +50,11 @@ public class Parameters {
     @NotNull
     public String getServerConnectTimeoutSeconds() {
         return SERVER_CONNECT_TIMEOUT_SECONDS;
+    }
+
+    @NotNull
+    public String getQueueAsPersonalBuild() {
+        return QUEUE_AS_PERSONAL_BUILD;
     }
 
     @NotNull

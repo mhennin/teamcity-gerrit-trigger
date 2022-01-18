@@ -76,6 +76,17 @@ public class GerritTriggerContext {
         return queryLimit;
     }
 
+    public boolean getQueueAsPersonalBuild() {
+        boolean queueAsPersonalBuild = false;
+        try {
+            queueAsPersonalBuild = Boolean.parseBoolean(gerritSettings.getTrimmedParameter(parameters, Parameters.QUEUE_AS_PERSONAL_BUILD));
+        } catch (Exception ex) {
+            throw new IllegalArgumentException("Unable to convert: " + gerritSettings.getTrimmedParameter(parameters, Parameters.QUEUE_AS_PERSONAL_BUILD) + " to a boolean.", ex);
+        }
+
+        return queueAsPersonalBuild;
+    }
+
     public boolean hasBranchParameter() {
         return getBranchParameter().length() > 0;
     }
